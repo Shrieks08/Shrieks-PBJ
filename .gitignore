@@ -1,0 +1,24 @@
+# Secrets — never commit your real API key
+.env
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Local cached data (politician trading JSON, etc.)
+*.log
+
+# Local Claude Code agent config
+.claude/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
