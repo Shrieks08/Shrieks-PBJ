@@ -54,13 +54,13 @@ Results are organised into 8 tabs:
 |--------|------|------|
 | yfinance | Prices, fundamentals, news | Free, no key |
 | SEC EDGAR | Form 4 insider filings | Free, no auth |
-| Senate / House Stock Watcher | Congressional trades | Free, no auth |
+| Finnhub | Congressional trades (House + Senate) | Free key |
 | Google Gemini API | AI analysis | Free API key required |
 
 ## Limitations
 
 - yfinance data may lag real time by ~15 minutes.
-- Politician trading data updates daily and may lag official reports.
+- Politician trading requires a free Finnhub API key (sidebar or `FINNHUB_API_KEY`); without it that tab stays empty.
 - Insider data depends on SEC filing speed (Form 4s appear ~2 business days after a trade).
 
 ## Disclaimer

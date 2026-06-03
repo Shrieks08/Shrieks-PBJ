@@ -37,6 +37,16 @@ def render_sidebar():
     if not api_key:
         api_key = os.environ.get('GEMINI_API_KEY', '')
 
+    finnhub_key = st.sidebar.text_input(
+        'Finnhub API Key (optional)',
+        type='password',
+        value=os.environ.get('FINNHUB_API_KEY', ''),
+        help='Only a PAID Finnhub plan returns congressional data. Without it, the '
+             'Politician tab shows free historical Senate data (2012–2020).',
+    )
+    if not finnhub_key:
+        finnhub_key = os.environ.get('FINNHUB_API_KEY', '')
+
     sector = st.sidebar.text_area(
         'Enter a sector or field to research',
         height=120,
@@ -57,18 +67,18 @@ def render_sidebar():
         st.markdown(
             '- **Financials:** yfinance (free)\n'
             '- **Insider trades:** SEC EDGAR (free)\n'
-            '- **Politician trades:** Senate / House Stock Watcher (free)\n'
+            '- **Politician trades:** Senate Stock Watcher (historical, free)\n'
             '- **AI analysis:** Google Gemini\n\n'
             'Data may lag real time. For research support only.'
         )
 
-    return api_key, sector, num_stocks, run
+    return api_key, finnhub_key, sector, num_stocks, run
 
 
 # --------------------------------------------------------------------------- #
 # Analysis pipeline
 # --------------------------------------------------------------------------- #
-def run_analysis(api_key: str, sector: str, num_stocks: int) -> dict:
+def run_analysis(api_key: str, finnhub_key: str, sector: str, num_stocks: int) -> dict:
     analyst = AIAnalyst(api_key)
     progress = st.progress(0.0)
     status = st.empty()
@@ -102,7 +112,7 @@ def run_analysis(api_key: str, sector: str, num_stocks: int) -> dict:
         progress.progress(min(base + 0.45 / total, 1.0))
 
         status.text(f'Checking congressional trading for {ticker}...')
-        trades = get_politician_trades(ticker)
+        trades = get_politician_trades(ticker, api_key=finnhub_key)
         politician_text = get_summary_text(ticker, trades)
         progress.progress(min(base + 0.60 / total, 1.0))
 
@@ -148,7 +158,8 @@ def run_analysis(api_key: str, sector: str, num_stocks: int) -> dict:
     progress.progress(1.0)
     status.text('Done.')
 
-    return {'sector': sector, 'stocks': stocks, 'brief': brief, 'categories': categories}
+    return {'sector': sector, 'stocks': stocks, 'brief': brief,
+            'categories': categories, 'has_finnhub': bool(finnhub_key)}
 
 
 # --------------------------------------------------------------------------- #
@@ -270,11 +281,16 @@ def render_results(results: dict):
         for ticker, data in stocks.items():
             for tx in data['trades']:
                 rows.append({'Ticker': ticker, **tx})
+        sources = {tx.get('source', '') for r in stocks.values() for tx in r['trades']}
+        if any('historical' in s.lower() for s in sources):
+            st.caption('⏳ Source: Senate Stock Watcher — real disclosures but '
+                       'historical (~2012–2020). Free live congressional data is no '
+                       'longer available; add a paid Finnhub/FMP key to auto-upgrade to current data.')
         if rows:
             df = pd.DataFrame(rows).sort_values('date', ascending=False)
             st.dataframe(df, use_container_width=True)
         else:
-            st.info('No congressional trades found for the analysed stocks.')
+            st.info('No Senate trades on record for the analysed tickers.')
 
     # Tab 4 — Insider Activity
     with tabs[3]:
@@ -336,13 +352,13 @@ def render_results(results: dict):
 # Main
 # --------------------------------------------------------------------------- #
 def main():
-    api_key, sector, num_stocks, run = render_sidebar()
+    api_key, finnhub_key, sector, num_stocks, run = render_sidebar()
 
     st.title('🔍 AI Stock Research Agent')
     st.caption('Discover and analyse publicly-traded stocks in any sector using free data + Gemini.')
 
     if run:
-        results = run_analysis(api_key, sector, num_stocks)
+        results = run_analysis(api_key, finnhub_key, sector, num_stocks)
         if results:
             st.session_state['results'] = results
 
