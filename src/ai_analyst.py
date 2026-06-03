@@ -16,9 +16,10 @@ from google.genai import types
 # app.py would otherwise read this before load_dotenv() runs).
 load_dotenv()
 
-# Model can be overridden with the GEMINI_MODEL env var. gemini-2.5-flash-lite
-# has the most generous free-tier rate limits if you keep hitting 429s.
-MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+# Model can be overridden with the GEMINI_MODEL env var. Default is
+# gemini-2.5-flash-lite for the most generous free-tier rate limits; set
+# GEMINI_MODEL=gemini-2.5-flash (or another model) to override.
+MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash-lite')
 
 # Free-tier friendly pacing/retry settings.
 _MIN_INTERVAL_SECONDS = 6.0   # space calls out to stay under per-minute quota
